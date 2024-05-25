@@ -1,0 +1,24 @@
+# Ignore data files
+data/*.csv
+
+# Ignore node_modules directories
+**/node_modules
+
+# Ignore virtual environments
+venv/
+
+# Ignore other system files
+.DS_Store
+Thumbs.db
+
+# Ignore logs
+logs
+*.log
+npm-debug.log*
+
+# Ignore environment variables file
+.env
+
+# Ignore build files
+build/
+dist/
