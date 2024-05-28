@@ -1,7 +1,6 @@
 const express = require('express');
-const passport = require('passport');
 const bcrypt = require('bcrypt'); 
-const User = require('../models/User'); 
+const axios = require('axios'); // Import axios for making HTTP requests
 
 const router = express.Router();
 const saltRounds = 10; 
@@ -25,7 +24,6 @@ router.post('/login', (req, res, next) => {
     if (err) return next(err);
     if (!user) return res.status(401).json({ message: 'Failed, check your email and password' });
 
-   
     req.logIn(user, (err) => {
       if (err) return next(err);
       return res.json({ message: 'Login successful', user });
@@ -33,5 +31,30 @@ router.post('/login', (req, res, next) => {
   })(req, res, next);
 });
 
+// Transaction route
+router.post('/transaction', async (req, res) => {
+  const { time, amount, features } = req.body; // Receive all features in the request body
+
+  // Ensure features array has the correct length
+  if (!features || features.length !== 30) {
+    return res.status(400).json({ message: 'Invalid features length' });
+  }
+
+  try {
+    console.log('Calling Flask microservice with features:', features);
+
+    // Call the Flask microservice for fraud detection
+    const response = await axios.post('http://localhost:5000/predict', { features });
+    const isFraud = response.data.prediction === 1;
+
+    console.log('Flask microservice response:', response.data);
+
+    // For now, just return the prediction result without user-specific logic
+    res.json({ message: 'Transaction processed', isFraud });
+  } catch (err) {
+    console.error('Error processing transaction:', err.message);
+    res.status(500).json({ message: 'Error processing transaction', error: err.message });
+  }
+});
 
 module.exports = router;
