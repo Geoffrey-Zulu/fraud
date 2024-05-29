@@ -1,14 +1,12 @@
-// src/components/Home.js
 import React from 'react';
 import { Container, Row, Col, Button, Navbar, Nav } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import './styles.css'; // Import the styles
+import './styles.css'; 
 
 const Home = ({ user }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Clear user data and navigate to login
     navigate('/');
   };
 
@@ -16,7 +14,7 @@ const Home = ({ user }) => {
     <>
       <Navbar bg="dark" variant="dark" expand="lg" fixed="top">
         <Container>
-          <Navbar.Brand href="#home">Adess Bank Fraud Detector</Navbar.Brand>
+          <Navbar.Brand href="#home">Anipa Bank Fraud Detector</Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto align-items-center">

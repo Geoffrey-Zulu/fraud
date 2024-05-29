@@ -1,8 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcrypt'); 
-const axios = require('axios'); // Import axios for making HTTP requests
-
+const axios = require('axios'); 
 const router = express.Router();
+const User = require('../models/User');
+const passport = require('passport');
 const saltRounds = 10; 
 
 // Registration route
@@ -15,6 +16,7 @@ router.post('/register', async (req, res) => {
     res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
     res.status(500).json({ message: 'User already exists', error: err.message });
+    console.log(err)
   }
 });
 
@@ -33,7 +35,7 @@ router.post('/login', (req, res, next) => {
 
 // Transaction route
 router.post('/transaction', async (req, res) => {
-  const { time, amount, features } = req.body; // Receive all features in the request body
+  const { time, amount, features, } = req.body; 
 
   // Ensure features array has the correct length
   if (!features || features.length !== 30) {
@@ -45,7 +47,7 @@ router.post('/transaction', async (req, res) => {
 
     // Call the Flask microservice for fraud detection
     const response = await axios.post('http://localhost:5000/predict', { features });
-    const isFraud = response.data.prediction === 1;
+    const isFraud = response.data.prediction === 0;
 
     console.log('Flask microservice response:', response.data);
 
@@ -57,4 +59,13 @@ router.post('/transaction', async (req, res) => {
   }
 });
 
+router.post('/deposit'), async (req, res) => {
+  
+}
+router.post('/withdraw'), async (req, res) => {
+  
+}
+router.post('/history'), async (req, res) => {
+  
+}
 module.exports = router;
