@@ -1,33 +1,29 @@
 const express = require('express');
-const session = require('express-session');
 const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const User = require('./models/User');
-const routes = require('./routes/routes');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-require('dotenv').config(); 
+const User = require('./models/User');
+const transactionRoutes = require('./routes/transactions');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 
-// cors
-app.use(cors());
+const PORT = process.env.PORT || 3000;
+
+// CORS setup
+const corsOptions = {
+  origin: 'http://localhost:3001',
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 // Middleware for parsing JSON
 app.use(express.json());
-
-// Session setup
-app.use(session({
-  secret: process.env.SECRET_KEY, 
-  resave: false,
-  saveUninitialized: true
-}));
-
-// Passport initialization
-app.use(passport.initialize());
-app.use(passport.session());
 
 // MongoDB connection
 mongoose.connect('mongodb://localhost:27017/fraud_detection', {
@@ -39,43 +35,37 @@ mongoose.connect('mongodb://localhost:27017/fraud_detection', {
   console.error('Error connecting to MongoDB', err);
 });
 
-// Passport local strategy
-passport.use(new LocalStrategy(
-  { usernameField: 'email' }, 
-  async (email, password, done) => {
-    try {
-      const user = await User.findOne({ email: email });
-      if (!user) {
-        return done(null, false, { message: 'Incorrect email.' });
-      }
-      const isMatch = await bcrypt.compare(password, user.password); 
-      if (!isMatch) {
-        return done(null, false, { message: 'Incorrect password.' });
-      }
-      return done(null, user);
-    } catch (err) {
-      return done(err);
-    }
-  }
-));
+// Passport JWT strategy
+const JwtStrategy = require('passport-jwt').Strategy;
+const ExtractJwt = require('passport-jwt').ExtractJwt;
 
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
+const opts = {
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  secretOrKey: process.env.JWT_SECRET,
+};
 
-passport.deserializeUser(async (id, done) => {
+passport.use(new JwtStrategy(opts, async (jwt_payload, done) => {
   try {
-    const user = await User.findById(id);
-    done(null, user);
+    const user = await User.findById(jwt_payload.id);
+    if (user) {
+      return done(null, user);
+    } else {
+      return done(null, false);
+    }
   } catch (err) {
-    done(err, null);
+    return done(err, false);
   }
-});
+}));
 
+app.use(passport.initialize());
 
-app.use('/', routes);
+// Authentication middleware
+const ensureAuthenticated = passport.authenticate('jwt', { session: false });
 
-const PORT = process.env.PORT || 3000;
+// Use routes
+app.use('/auth', authRoutes);
+app.use('/transactions', ensureAuthenticated, transactionRoutes);
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

@@ -1,41 +1,12 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
 const axios = require('axios');
-const passport = require('passport');
 const User = require('../models/User');
 
 const router = express.Router();
-const saltRounds = 10;
 
 function generateSimulatedFeatures() {
   return Array.from({ length: 28 }, () => Math.random() * 2 - 1);
 }
-
-// Registration route
-router.post('/register', async (req, res) => {
-  const { username, email, password, accountNumber } = req.body;
-  try {
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const newUser = new User({ username, email, password: hashedPassword, accountNumber, balance: 0 });
-    await newUser.save();
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'User already exists or account number taken', error: err.message });
-  }
-});
-
-// Login route
-router.post('/login', (req, res, next) => {
-  passport.authenticate('local', async (err, user, info) => {
-    if (err) return next(err);
-    if (!user) return res.status(401).json({ message: 'Failed, check your email and password' });
-
-    req.logIn(user, (err) => {
-      if (err) return next(err);
-      return res.json({ message: 'Login successful', user });
-    });
-  })(req, res, next);
-});
 
 // Transaction route
 router.post('/transaction', async (req, res) => {
@@ -84,7 +55,7 @@ router.post('/transaction', async (req, res) => {
     await sender.save();
     await receiver.save();
 
-    res.json({ message: 'Transaction processed', senderBalance: sender.balance, receiverBalance: receiver.balance });
+    res.json({ message: 'Transaction processed', senderBalance: sender.balance, receiverBalance: receiver.balance, user: sender });
   } catch (err) {
     console.error('Error processing transaction:', err.message);
     res.status(500).json({ message: 'Error processing transaction', error: err.message });
@@ -110,7 +81,7 @@ router.post('/deposit', async (req, res) => {
     user.balance += amount;
     await user.save();
 
-    res.json({ message: 'Deposit successful', balance: user.balance });
+    res.json({ message: 'Deposit successful', balance: user.balance, user });
   } catch (err) {
     console.error('Error processing deposit:', err.message);
     res.status(500).json({ message: 'Error processing deposit', error: err.message });
@@ -140,7 +111,7 @@ router.post('/withdraw', async (req, res) => {
     user.balance -= amount;
     await user.save();
 
-    res.json({ message: 'Withdrawal successful', balance: user.balance });
+    res.json({ message: 'Withdrawal successful', balance: user.balance, user });
   } catch (err) {
     console.error('Error processing withdrawal:', err.message);
     res.status(500).json({ message: 'Error processing withdrawal', error: err.message });

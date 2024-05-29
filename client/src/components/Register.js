@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Form } from 'react-bootstrap';
+import { Card, Button, Form, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
@@ -10,6 +10,7 @@ const Register = () => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [accountNumber, setAccountNumber] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const navigate = useNavigate();
@@ -47,13 +48,13 @@ const Register = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
-        if (!username || !email || !password) {
+        if (!username || !email || !password || !accountNumber) {
             setErrorMessage('All fields are required');
             return;
         }
 
         try {
-            const response = await axios.post('http://localhost:3000/register', { username, email, password });
+            const response = await axios.post('http://localhost:3000/auth/register', { username, email, password, accountNumber });
             if (response.data.message === 'User registered successfully') {
                 setSuccessMessage(response.data.message);
                 setTimeout(() => {
@@ -80,57 +81,73 @@ const Register = () => {
             justifyContent: 'center',
             alignItems: 'center'
         }}>
-            <Card style={{ width: '28rem', backgroundColor: '#f8f9fa' }}>
-                <Card.Body className='d-flex flex-column align-items-center'>
-                    <div className='d-flex flex-row mt-2 mb-4 align-items-center'>
-                        <img src={logoImage} alt="Logo" style={{ width: '100px', height: '100px', marginRight: '10px' }} />
+            <Card style={{ width: '30rem', backgroundColor: '#f8f9fa' }}>
+                <Card.Body>
+                    <div className='d-flex flex-row mb-4 align-items-center justify-content-center'>
+                        <img src={logoImage} alt="Logo" style={{ width: '50px', height: '50px', marginRight: '10px' }} />
                         <span className="h1 fw-bold mb-0">Adess Bank</span>
                     </div>
 
-                    <h5 className="fw-normal my-4 pb-3" style={{ letterSpacing: '1px' }}>Register your account</h5>
+                    <h5 className="fw-normal my-4 pb-3 text-center" style={{ letterSpacing: '1px' }}>Register your account</h5>
 
                     {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
                     {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
 
                     <Form onSubmit={handleSubmit}>
-                        <Form.Group controlId="formUsername" className="mb-4">
-                            <Form.Label>Username</Form.Label>
-                            <Form.Control
-                                type="text"
-                                size="lg"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                            />
+                        <Form.Group as={Row} controlId="formUsername" className="mb-4">
+                            <Form.Label column sm={4}>Username</Form.Label>
+                            <Col sm={8}>
+                                <Form.Control
+                                    type="text"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                />
+                            </Col>
                         </Form.Group>
 
-                        <Form.Group controlId="formEmail" className="mb-4">
-                            <Form.Label>Email address</Form.Label>
-                            <Form.Control
-                                type="email"
-                                size="lg"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
+                        <Form.Group as={Row} controlId="formEmail" className="mb-4">
+                            <Form.Label column sm={4}>Email address</Form.Label>
+                            <Col sm={8}>
+                                <Form.Control
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                            </Col>
                         </Form.Group>
 
-                        <Form.Group controlId="formPassword" className="mb-4">
-                            <Form.Label>Password</Form.Label>
-                            <Form.Control
-                                type="password"
-                                size="lg"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
+                        <Form.Group as={Row} controlId="formPassword" className="mb-4">
+                            <Form.Label column sm={4}>Password</Form.Label>
+                            <Col sm={8}>
+                                <Form.Control
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </Col>
                         </Form.Group>
 
-                        <Button variant="dark" size="lg" type="submit" className="mb-4 px-5">Register</Button>
+                        <Form.Group as={Row} controlId="formAccountNumber" className="mb-4">
+                            <Form.Label column sm={4}>Account Number</Form.Label>
+                            <Col sm={8}>
+                                <Form.Control
+                                    type="text"
+                                    value={accountNumber}
+                                    onChange={(e) => setAccountNumber(e.target.value)}
+                                />
+                            </Col>
+                        </Form.Group>
+
+                        <div className="d-flex justify-content-center">
+                            <Button variant="dark" type="submit" className="px-5">Register</Button>
+                        </div>
                     </Form>
 
-                    <p className="mb-5 pb-lg-2" style={{ color: '#393f81', fontSize: '0.875rem' }}>
+                    <p className="mt-4 text-center" style={{ color: '#393f81', fontSize: '0.875rem' }}>
                         Already have an account? <Link to="/" style={{ color: '#393f81', fontSize: '0.875rem' }}>Login here</Link>
                     </p>
 
-                    <div className='d-flex flex-row justify-content-start'>
+                    <div className='d-flex flex-row justify-content-center'>
                         <a href="#!" className="small text-muted me-1">Terms of use.</a>
                         <a href="#!" className="small text-muted">Privacy policy</a>
                     </div>

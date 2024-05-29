@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Card, Button, Form } from 'react-bootstrap';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import backgroundImage from './background.jpg';
 import logoImage from './logo.png';
+import { UserContext } from './UserContext';
 
-const Login = ({ setUser }) => {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
+  const { setUser } = useContext(UserContext); // Use UserContext
 
   useEffect(() => {
     if (errorMessage) {
@@ -51,9 +53,21 @@ const Login = ({ setUser }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:3000/login', { email, password });
+      const response = await axios.post('http://localhost:3000/auth/login', { email, password });
       if (response.data.message === 'Login successful') {
-        setUser(response.data.user);
+        // Store the JWT token in local storage
+        localStorage.setItem('token', response.data.token);
+        
+        // Fetch user details
+        const userResponse = await axios.get('http://localhost:3000/auth/user', {
+          headers: {
+            Authorization: `Bearer ${response.data.token}`
+          }
+        });
+        
+        // Set the user in the state
+        setUser(userResponse.data.user);
+        
         navigate('/home');
       } else {
         setErrorMessage(response.data.message);
@@ -102,8 +116,8 @@ const Login = ({ setUser }) => {
                 type="password"
                 size="lg"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)
-                } />
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </Form.Group>
 
             <Button variant="dark" size="lg" type="submit" className="mb-4 px-5">Login</Button>
