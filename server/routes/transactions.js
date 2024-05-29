@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const User = require('../models/User');
-
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 
 function generateSimulatedFeatures() {
@@ -62,6 +62,21 @@ router.post('/transaction', async (req, res) => {
   }
 });
 
+
+router.get('/history', async (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+  try {
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decodedToken.id).populate('transactions');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ transactions: user.transactions });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({ message: 'Error fetching transactions', error: error.message });
+  }
+});
 
 // Deposit route
 router.post('/deposit', async (req, res) => {

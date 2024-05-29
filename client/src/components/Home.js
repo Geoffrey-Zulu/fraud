@@ -16,10 +16,11 @@ const Home = () => {
   const [accountNumber, setAccountNumber] = useState('');
   const [amount, setAmount] = useState('');
   const [receiverAccount, setReceiverAccount] = useState('');
-  const [time, setTime] = useState(''); // New state variable for time
+  const [time, setTime] = useState('');
   const [transactionMessage, setTransactionMessage] = useState('');
   const [depositMessage, setDepositMessage] = useState('');
   const [withdrawMessage, setWithdrawMessage] = useState('');
+  const [transactions, setTransactions] = useState([]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -39,6 +40,20 @@ const Home = () => {
     fetchUser();
   }, [setUser]);
 
+  const fetchTransactions = async () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const response = await axios.get('http://localhost:3000/transactions/history', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setTransactions(response.data.transactions);
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+      }
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUser(null);
@@ -54,7 +69,10 @@ const Home = () => {
   const handleShowTransactModal = () => setShowTransactModal(true);
   const handleCloseTransactModal = () => setShowTransactModal(false);
 
-  const handleShowViewModal = () => setShowViewModal(true);
+  const handleShowViewModal = () => {
+    fetchTransactions();
+    setShowViewModal(true);
+  };
   const handleCloseViewModal = () => setShowViewModal(false);
 
   const handleDeposit = async (event) => {
@@ -68,7 +86,6 @@ const Home = () => {
       if (response.data.message === 'Deposit successful') {
         setDepositMessage(`Deposit successful. New balance: K${response.data.balance}`);
 
-        // Update the user balance
         setUser(prevUser => ({
           ...prevUser,
           balance: response.data.balance
@@ -97,7 +114,6 @@ const Home = () => {
       if (response.data.message === 'Withdrawal successful') {
         setWithdrawMessage(`Withdrawal successful. New balance: K${response.data.balance}`);
 
-        // Update the user balance
         setUser(prevUser => ({
           ...prevUser,
           balance: response.data.balance
@@ -118,8 +134,6 @@ const Home = () => {
   const handleTransaction = async (event) => {
     event.preventDefault();
     const token = localStorage.getItem('token');
-
-    // Convert time to seconds
     const [hours, minutes] = time.split(':').map(Number);
     const timeInSeconds = (hours * 3600) + (minutes * 60);
 
@@ -131,7 +145,6 @@ const Home = () => {
       if (response.data.message === 'Transaction processed') {
         setTransactionMessage(`Transaction successful. New balance: K${response.data.senderBalance}. Fraud check: ${response.data.isFraud ? 'Fraudulent' : 'Not Fraudulent'}`);
 
-        // Update the user balance
         setUser(prevUser => ({
           ...prevUser,
           balance: response.data.senderBalance
@@ -149,10 +162,9 @@ const Home = () => {
     }
   };
 
-
   return (
     <>
-      <Navbar bg="primary" variant="dark" expand="lg" fixed="top">
+      <Navbar  variant="dark" expand="lg" fixed="top">
         <Container>
           <Navbar.Brand href="#home">
             <img src={logoImage} alt="Logo" style={{ width: '30px', height: '30px', marginRight: '10px' }} />
@@ -169,30 +181,37 @@ const Home = () => {
           </Navbar.Collapse>
         </Container>
       </Navbar>
+
+<Container className='main-content-container'>
+
       <Container className="d-flex flex-column align-items-center justify-content-center" style={{ height: '100vh', paddingTop: '5rem' }}>
-        <Row className="mb-4">
+        <Row className="mb-4 title-container">
           <Col>
-            <h1 className="text-center">Adess Bank ATM Simulator</h1>
+            <h1 className="text-center">Transaction Simulator</h1>
           </Col>
+          <hr className="w-100" />
         </Row>
         <Row className="mb-4">
           <Col>
-            <p className="balance text-center">K{user?.balance}</p>
+            <p className="balance text-center">Balance K{user?.balance}</p>
           </Col>
         </Row>
         <Row className="mb-4 text-center">
-          <Col><Button variant="secondary" className="option-button" onClick={handleShowDepositModal}>Deposit</Button></Col>
-          <Col><Button variant="secondary" className="option-button" onClick={handleShowWithdrawModal}>Withdraw</Button></Col>
-          <Col><Button variant="secondary" className="option-button" onClick={handleShowTransactModal}>Transact</Button></Col>
+          <Col><Button variant="secondary" onClick={handleShowDepositModal}>Deposit</Button></Col>
+          <Col><Button variant="secondary" onClick={handleShowWithdrawModal}>Withdraw</Button></Col>
+          <Col><Button variant="secondary" onClick={handleShowTransactModal}>Transact</Button></Col>
         </Row>
         <hr className="w-100" />
-        <Row>
+        <Row  className="pb-custom">
           <Col>
             <h2 className="text-center">Transaction History</h2>
-            <Button variant="success" className="view-button" onClick={handleShowViewModal}>View</Button>
+            <Button variant="success" onClick={handleShowViewModal}>View</Button>
           </Col>
         </Row>
       </Container>
+
+      </Container>
+
 
       {/* Deposit Modal */}
       <Modal show={showDepositModal} onHide={handleCloseDepositModal}>
@@ -318,12 +337,31 @@ const Home = () => {
           <Modal.Title>Transactions</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {/* Transaction history content goes here */}
+          <p>Amount: Time : Status</p>
+          {transactions.length > 0 ? (
+            <ul>
+              {transactions.map((transaction, index) => (
+                <li key={index}>
+                  {transaction.time} - {transaction.amount} - {transaction.isFraud ? 'Fraudulent' : 'Not Fraudulent'}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No transactions found</p>
+          )}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseViewModal}>Close</Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Footer */}
+      <footer className="footer">
+        <Container className="text-center">
+          <p>© 2024 Adess Bank, All rights reserved.</p>
+          <p>Location: Lusaka | Customer Support: support@adess.co.zm</p>
+        </Container>
+      </footer>
     </>
   );
 };

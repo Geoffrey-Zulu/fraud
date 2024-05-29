@@ -1,12 +1,16 @@
 body {
-  font-family: 'Arial', sans-serif;
-  background-color: #f8f9fa;
+  font-family: 'Arial', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+  background-color: #F1E5D1;
   margin: 0;
   padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .navbar {
   width: 100%;
+  background-color: #2A629A;
 }
 
 .container {
@@ -15,7 +19,7 @@ body {
 
 h1, h2 {
   font-size: 2rem;
-  color: #333;
+  color: #160b05;
   text-align: center;
 }
 
@@ -29,14 +33,9 @@ h2 {
 
 .balance {
   font-size: 3rem;
-  color: #393f81;
+  color: #3b44a2;
 }
 
-p {
-  font-size: 1.5rem;
-  color: #393f81;
-  text-align: center;
-}
 
 .option-button {
   font-size: 1rem;
@@ -52,4 +51,44 @@ button {
 hr {
   margin-top: 20px;
   border: 1px solid #ddd;
+}
+
+
+/* Styles for the main content container */
+.main-content-container {
+  background-color: #989da5;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+  border: 1px solid #ddd;
+  margin-bottom: 20px;
+  text-align: center;
+  width: 100%;
+}
+
+
+/* Footer styles */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #2A629A;
+  padding: 10px 0;
+  text-align: center;
+  box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
+}
+
+
+.balance {
+  font-size: 2rem; 
+}
+
+.transaction-history-container {
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.pb-custom {
+  padding-bottom: 20px; 
 }
