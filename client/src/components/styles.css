@@ -27,13 +27,29 @@ h2 {
   font-size: 2rem;
 }
 
+.balance {
+  font-size: 3rem;
+  color: #393f81;
+}
+
 p {
   font-size: 1.5rem;
   color: #393f81;
   text-align: center;
 }
 
+.option-button {
+  font-size: 1rem;
+  margin-top: 20px;
+  width: 100%;
+}
+
 button {
   font-size: 1rem;
   margin-top: 20px;
+}
+
+hr {
+  margin-top: 20px;
+  border: 1px solid #ddd;
 }
