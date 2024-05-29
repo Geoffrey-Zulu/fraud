@@ -2,19 +2,22 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Container, Row, Col, Button, Navbar, Nav, Modal, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import './styles.css'; 
+import './styles.css';
 import logoImage from './logo2.png';
 import { UserContext } from './UserContext';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useContext(UserContext); // Use UserContext
+  const { user, setUser } = useContext(UserContext);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [showTransactModal, setShowTransactModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [accountNumber, setAccountNumber] = useState('');
   const [amount, setAmount] = useState('');
+  const [receiverAccount, setReceiverAccount] = useState('');
+  const [time, setTime] = useState(''); // New state variable for time
+  const [transactionMessage, setTransactionMessage] = useState('');
   const [depositMessage, setDepositMessage] = useState('');
   const [withdrawMessage, setWithdrawMessage] = useState('');
 
@@ -58,19 +61,19 @@ const Home = () => {
     event.preventDefault();
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.post('http://localhost:3000/transactions/deposit', 
-      { accountNumber, amount: parseFloat(amount) },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      const response = await axios.post('http://localhost:3000/transactions/deposit',
+        { accountNumber, amount: parseFloat(amount) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       if (response.data.message === 'Deposit successful') {
         setDepositMessage(`Deposit successful. New balance: K${response.data.balance}`);
-        
+
         // Update the user balance
         setUser(prevUser => ({
           ...prevUser,
           balance: response.data.balance
         }));
-        
+
         setTimeout(() => {
           setDepositMessage('');
           handleCloseDepositModal();
@@ -87,13 +90,13 @@ const Home = () => {
     event.preventDefault();
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.post('http://localhost:3000/transactions/withdraw', 
-      { accountNumber, amount: parseFloat(amount) },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      const response = await axios.post('http://localhost:3000/transactions/withdraw',
+        { accountNumber, amount: parseFloat(amount) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       if (response.data.message === 'Withdrawal successful') {
         setWithdrawMessage(`Withdrawal successful. New balance: K${response.data.balance}`);
-        
+
         // Update the user balance
         setUser(prevUser => ({
           ...prevUser,
@@ -111,6 +114,41 @@ const Home = () => {
       setWithdrawMessage(error.response?.data?.message || 'An error occurred. Please try again.');
     }
   };
+
+  const handleTransaction = async (event) => {
+    event.preventDefault();
+    const token = localStorage.getItem('token');
+
+    // Convert time to seconds
+    const [hours, minutes] = time.split(':').map(Number);
+    const timeInSeconds = (hours * 3600) + (minutes * 60);
+
+    try {
+      const response = await axios.post('http://localhost:3000/transactions/transaction',
+        { time: timeInSeconds, amount: parseFloat(amount), senderAccount: accountNumber, receiverAccount },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.message === 'Transaction processed') {
+        setTransactionMessage(`Transaction successful. New balance: K${response.data.senderBalance}. Fraud check: ${response.data.isFraud ? 'Fraudulent' : 'Not Fraudulent'}`);
+
+        // Update the user balance
+        setUser(prevUser => ({
+          ...prevUser,
+          balance: response.data.senderBalance
+        }));
+
+        setTimeout(() => {
+          setTransactionMessage('');
+          handleCloseTransactModal();
+        }, 3000);
+      } else {
+        setTransactionMessage(response.data.message);
+      }
+    } catch (error) {
+      setTransactionMessage(error.response?.data?.message || 'An error occurred. Please try again.');
+    }
+  };
+
 
   return (
     <>
@@ -147,7 +185,7 @@ const Home = () => {
           <Col><Button variant="secondary" className="option-button" onClick={handleShowWithdrawModal}>Withdraw</Button></Col>
           <Col><Button variant="secondary" className="option-button" onClick={handleShowTransactModal}>Transact</Button></Col>
         </Row>
-        <hr className="w-100"/>
+        <hr className="w-100" />
         <Row>
           <Col>
             <h2 className="text-center">Transaction History</h2>
@@ -226,7 +264,48 @@ const Home = () => {
           <Modal.Title>Transact</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {/* Transact  */}
+          <Form onSubmit={handleTransaction}>
+            <Form.Group controlId="formSenderAccountNumber" className="mb-3">
+              <Form.Label>Sender Account Number</Form.Label>
+              <Form.Control
+                type="text"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group controlId="formReceiverAccountNumber" className="mb-3">
+              <Form.Label>Receiver Account Number</Form.Label>
+              <Form.Control
+                type="text"
+                value={receiverAccount}
+                onChange={(e) => setReceiverAccount(e.target.value)}
+              />
+            </Form.Group>
+            <Row>
+              <Col>
+                <Form.Group controlId="formAmount" className="mb-3">
+                  <Form.Label>Amount</Form.Label>
+                  <Form.Control
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="formTime" className="mb-3">
+                  <Form.Label>Time</Form.Label>
+                  <Form.Control
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            {transactionMessage && <p style={{ color: transactionMessage.includes('successful') ? 'green' : 'red' }}>{transactionMessage}</p>}
+            <Button variant="primary" type="submit">Submit</Button>
+          </Form>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseTransactModal}>Close</Button>
@@ -239,7 +318,7 @@ const Home = () => {
           <Modal.Title>Transactions</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {/* Transaction */}
+          {/* Transaction history content goes here */}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseViewModal}>Close</Button>

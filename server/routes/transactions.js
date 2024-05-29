@@ -8,33 +8,35 @@ function generateSimulatedFeatures() {
   return Array.from({ length: 28 }, () => Math.random() * 2 - 1);
 }
 
-// Transaction route
+
 router.post('/transaction', async (req, res) => {
   const { time, amount, senderAccount, receiverAccount } = req.body;
 
-  // Ensure all required fields are present
   if (!time || !amount || !senderAccount || !receiverAccount) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  // Generate simulated features
+  // Convert time to a timestamp
+  const timestamp = new Date(time).getTime();
+  if (isNaN(timestamp)) {
+    return res.status(400).json({ message: 'Invalid time format' });
+  }
+
   const simulatedFeatures = generateSimulatedFeatures();
-  const features = [time, amount, ...simulatedFeatures];
+  const features = [timestamp, parseFloat(amount), ...simulatedFeatures];
 
   try {
     console.log('Calling Flask microservice with features:', features);
 
-    // Call the Flask microservice for fraud detection
     const response = await axios.post('http://localhost:5000/predict', { features });
     console.log('Flask microservice response:', response.data);
 
-    const isFraud = response.data.prediction === 0;
+    const isFraud = response.data.prediction === 1;  // Update to check for fraud condition
 
     if (isFraud) {
-      return res.status(400).json({ message: 'Transaction flagged as fraudulent' });
+      return res.status(400).json({ message: 'Transaction flagged as fraudulent', isFraud });
     }
 
-    // Find sender and receiver accounts
     const sender = await User.findOne({ accountNumber: senderAccount });
     const receiver = await User.findOne({ accountNumber: receiverAccount });
 
@@ -46,21 +48,20 @@ router.post('/transaction', async (req, res) => {
       return res.status(400).json({ message: 'Insufficient funds' });
     }
 
-    // Deduct amount from sender and add to receiver
     sender.balance -= amount;
     receiver.balance += amount;
 
-    // Record the transaction
     sender.transactions.push({ time, amount, isFraud });
     await sender.save();
     await receiver.save();
 
-    res.json({ message: 'Transaction processed', senderBalance: sender.balance, receiverBalance: receiver.balance, user: sender });
+    res.json({ message: 'Transaction processed', senderBalance: sender.balance, receiverBalance: receiver.balance, isFraud });
   } catch (err) {
     console.error('Error processing transaction:', err.message);
     res.status(500).json({ message: 'Error processing transaction', error: err.message });
   }
 });
+
 
 // Deposit route
 router.post('/deposit', async (req, res) => {

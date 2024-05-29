@@ -1,19 +1,25 @@
 from flask import Flask, request, jsonify
-import joblib
 import numpy as np
+import joblib
+import warnings
+from sklearn.exceptions import DataConversionWarning
 
 app = Flask(__name__)
+model = joblib.load('model.pkl')
 
-# Load the model
-model = joblib.load('fraud_detection_model.pkl')
+# Suppress the DataConversionWarning
+warnings.simplefilter(action='ignore', category=DataConversionWarning)
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.json
-    features = np.array([data['features']])
-    prediction = model.predict(features)
-    result = {'prediction': int(prediction[0])}
-    return jsonify(result)
+    data = request.get_json()
+    features = np.array(data['features'], dtype=float).reshape(1, -1)
+    
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        prediction = model.predict(features)
+    
+    return jsonify({'prediction': int(prediction[0])})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True)
